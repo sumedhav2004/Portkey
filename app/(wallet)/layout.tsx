@@ -1,6 +1,5 @@
 'use client'
 
-import { walletExists } from "@/lib/storage/walletStorage"
 import { redirect } from "next/navigation"
 import { ReactNode } from "react"
 
@@ -9,7 +8,6 @@ type Props = {
 }
 
 export default function WalletLayout({ children }: Props) {
-  if (!walletExists()) redirect("/create")
 
   return (
     <div>
