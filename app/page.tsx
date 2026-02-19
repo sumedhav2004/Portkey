@@ -1,65 +1,303 @@
-import Image from "next/image";
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { div } from "framer-motion/client"
+import Sidebar  from "../components/self/sidebar"
+import { useWalletStore } from "@/walletStore/store"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { getSolBalance } from "@/lib/crypto/solana/getBalance"
+import { Button } from "@/components/ui/button"
+import { loadEncryptedMnemonic } from "@/lib/storage/walletStorage"
+import { decryptMnemonic } from "@/lib/crypto/decrypt"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ArrowBigLeft, ArrowBigRight, ArrowDownWideNarrow, ArrowDownZA, ArrowUpDown, DollarSign, X } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { deriveSeedFromMnemonic } from "@/lib/crypto/deriveSeedFromMnemonic"
+import { deriveSolanaKeyPair } from "@/lib/crypto/solana/deriveKeypair"
+
+
 
 export default function Home() {
+  const router = useRouter()
+  const accounts = useWalletStore(s => s.accounts)
+  const addAccount = useWalletStore(s => s.addAccount)
+  const removeAccount = useWalletStore(s => s.removeAccount)
+
+  console.log(accounts)
+  const [balances,setBalances] = useState<Map<string,number>>(new Map())
+  const [realtimeData, setRealtimeData] = useState()
+  const [showModal,setShowModal] = useState<boolean>(false);
+  const [clicked,setClicked] = useState<string>("no");
+  const [password,setPassword] = useState<string>("")
+  const [index,setIndex] = useState<number>(0)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+
+  async function handleRemove(address: string){
+    removeAccount(address);
+  }
+
+  async function handleAdd(){
+    const encrypted = loadEncryptedMnemonic();
+    if(!encrypted) return;
+
+    const mnemonic = await decryptMnemonic(encrypted,password);
+    const seed = deriveSeedFromMnemonic(mnemonic)
+    const keyPair = deriveSolanaKeyPair(seed,index);
+    const newAccount = {
+      index,
+      keypair: keyPair,
+      address: keyPair.publicKey.toBase58(),
+    }
+    addAccount(newAccount)
+    setClicked("no")
+  }
+
+  useEffect(() => {
+    async function getData() {
+      try {
+        const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd", {
+                                      method: "GET",
+                                      headers: {
+                                        "Authorization": "Bearer CG-uaLzWCXVbePBmpvAiKFxUBJD",
+                                        "Content-Type": "application/json"
+                                      }
+                                    })
+;
+
+        const data = await response.json();
+        setRealtimeData(data);
+
+        console.log("FETCHED DATA: ",data);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+
+    getData();
+
+  },[])
+
+  useEffect(() => {
+    async function fetchBalances() {
+      const newBalances = new Map<string, number>()
+      for (const account of accounts) {
+        const bal = await getSolBalance(account.address)
+        newBalances.set(account.address, bal)
+      }
+      setBalances(newBalances)
+    }
+    if (accounts.length > 0) {
+      fetchBalances()
+    }
+  }, [accounts])
+
+
+  useEffect(() => {
+    if (accounts.length === 0) {
+      router.push("/login")
+    }
+  }, [accounts])
+
+
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+  <div className="bg-background min-h-screen flex relative overflow-hidden">
+
+    {/* Desktop Sidebar */}
+    <div className="hidden lg:block fixed left-0 top-0 h-screen w-80 z-40">
+      <Sidebar data={realtimeData || []} />
     </div>
-  );
+
+    {/* Mobile Sidebar Overlay */}
+    <div
+      className={`fixed inset-0 z-50 transition-all duration-300 lg:hidden ${
+        isSidebarOpen ? "visible opacity-100" : "invisible opacity-0"
+      }`}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
+      {/* Slide Drawer */}
+      <div
+        className={`absolute left-0 top-0 h-full w-72 bg-background border-r border-border transform transition-transform duration-300 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <Sidebar data={realtimeData || []} />
+      </div>
+    </div>
+
+    {/* Main Content */}
+    <div className="flex-1 lg:ml-80 flex flex-col min-h-screen w-full px-4 sm:px-6 lg:px-8">
+
+      {/* Top Bar */}
+      <div className="flex items-center justify-between py-4 border-b border-border">
+        
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          className="lg:hidden text-white rounded-md border border-white"
+          onClick={() => setIsSidebarOpen(prev => !prev)}
+        >
+          ☰
+        </Button>
+
+        <h1 className="text-white font-bold tracking-tight text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+          Portkey
+        </h1>
+
+        <div className="w-8 lg:hidden" /> {/* balance spacing */}
+      </div>
+
+      {/* Wallet Grid */}
+      <div className="flex-1 py-6">
+        <div className="grid gap-6
+                        grid-cols-1
+                        sm:grid-cols-2
+                        xl:grid-cols-2">
+
+          {accounts.map((account, i) => (
+            <Card key={i} className="flex flex-col justify-between p-4">
+              
+              <CardHeader className="flex justify-between items-center p-0 mb-4">
+                <CardTitle className="text-lg sm:text-xl md:text-2xl">
+                  {`Wallet ${i + 1}`}
+                </CardTitle>
+
+                <Button
+                  onClick={() => handleRemove(account.address)}
+                  variant="outline"
+                  className="border-red-500 text-red-500 rounded-full"
+                >
+                  <X size={18} />
+                </Button>
+              </CardHeader>
+
+              <CardContent className="flex flex-col gap-6 p-0">
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
+                    <ArrowBigRight size={18} />
+                    Send
+                  </Button>
+                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
+                    <ArrowDownWideNarrow size={18} />
+                    Receive
+                  </Button>
+                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
+                    <ArrowUpDown size={18} />
+                    Swap
+                  </Button>
+                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
+                    <DollarSign size={18} />
+                    Buy
+                  </Button>
+                </div>
+
+                {/* Address + Balance */}
+                <div>
+                  <p className="text-xs sm:text-sm text-muted-foreground break-all">
+                    {account.address}
+                  </p>
+
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-muted-foreground mt-2">
+                    {balances.get(account.address)?.toFixed(2)} SOL
+                  </p>
+                </div>
+
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Add Wallet Card */}
+          {accounts.length < 4 && (
+            <div className="flex flex-col justify-center items-center bg-accent rounded-xl p-6">
+              {clicked === "no" && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      Add New Wallet
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="font-bold underline">
+                        Choose one
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setClicked("New")}>
+                        Create New Wallet
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setClicked("Import")}>
+                        Import New Wallet
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {clicked === "New" && (
+                <div className="flex flex-col gap-4 w-full">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setClicked("no")}
+                  >
+                    <ArrowBigLeft />
+                  </Button>
+
+                  <Input
+                    type="number"
+                    placeholder="Wallet index"
+                    onChange={(e) => setIndex(Number(e.target.value))}
+                  />
+
+                  <Input
+                    placeholder="Password"
+                    type="password"
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+
+                  <Button onClick={handleAdd}>
+                    Create New
+                  </Button>
+                </div>
+              )}
+
+              {clicked === "Import" && (
+                <div className="flex flex-col gap-4 w-full">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setClicked("no")}
+                  >
+                    <ArrowBigLeft />
+                  </Button>
+
+                  <p className="text-sm text-muted-foreground text-center">
+                    Feature coming soon with multi-chain support.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
 }
