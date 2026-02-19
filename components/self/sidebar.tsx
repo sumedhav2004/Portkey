@@ -30,7 +30,16 @@ const sidebar = (props: Props) => {
             <img src={each.image} alt="" className='w-10' />
             <p className='text-white w-1/3 flex-wrap'>{each.name}</p>
             <p className='text-white font-semibold'>${each.current_price.toFixed(1)}</p>
-            <p className={each?.price_change_percentage_24h > 0 ? `text-green-500`:`text-red-500`}>{(each.price_change_percentage_24h)?.toFixed(1)}%</p>
+            <p
+              className={
+                (each.price_change_percentage_24h ?? 0) > 0
+                  ? "text-green-500"
+                  : "text-red-500"
+              }
+            >
+              {(each.price_change_percentage_24h ?? 0).toFixed(1)}%
+            </p>
+
           </div>
         ))}
       </div>
