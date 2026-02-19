@@ -17,6 +17,10 @@ const page = (props: Props) => {
   const [password, setPassword] = useState<string>('');
   const [confirmPassword,setConfirmPassword] = useState<string>('')
 
+  const handleLogin = () => {
+    router.push('/login')
+  }
+
   const handleImportWallet = async() =>{
     await registerUser(password,confirmPassword)
     router.push("/onboarding/importWallet")
@@ -48,6 +52,7 @@ const page = (props: Props) => {
       <div className='flex w-full max-w-xl items-center justify-between'>
         <Button onClick={handleImportWallet} variant="secondary" className=''>Import Wallet</Button>
         <Button onClick={handleCreateWallet} className=''>Generate Wallet</Button>
+        <Button variant="outline" onClick={handleLogin}>Login</Button>
       </div>
     </div>
   )

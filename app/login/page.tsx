@@ -19,10 +19,17 @@ const page = (props: Props) => {
   const [password,setPassword] = useState<string>('');
   const [confirmPassword,setConfirmPassword] = useState<string>('');
 
+  function handleRegister(){
+    router.push("/onboarding")
+  }
+
   async function handleLogin(){
     try{
+      
       const encrypted = loadEncryptedMnemonic();
       if(!encrypted) return;
+
+      console.log(1)
 
       const mnemonic = await decryptMnemonic(encrypted,password);
       const seed = await deriveSeedFromMnemonic(mnemonic);
@@ -55,8 +62,8 @@ const page = (props: Props) => {
         </CardContent>
         <CardFooter>
           <div className='flex justify-between items-center w-full'>
-            <Button onClick={handleLogin}>login/Unlock</Button>
-            <Button variant="outline">register</Button>
+            <Button onClick={()=>handleLogin()}>login/Unlock</Button>
+            <Button onClick={()=>handleRegister()} variant="outline">register</Button>
           </div>
         </CardFooter>
       </Card>

@@ -25,8 +25,8 @@ const sidebar = (props: Props) => {
       </div>
 
       <div className='overflow-y-scroll flex flex-col w-full h-2/3 no-scrollbar border border-white rounded-md gap-2 p-1'>
-        {props.data.map((each) => (
-          <div className='w-full flex flex-row items-center justify-between gap-2 p-2'>
+        {props.data.map((each,i) => (
+          <div key={i} className='w-full flex flex-row items-center justify-between gap-2 p-2'>
             <img src={each.image} alt="" className='w-10' />
             <p className='text-white w-1/3 flex-wrap'>{each.name}</p>
             <p className='text-white font-semibold'>${each.current_price.toFixed(1)}</p>

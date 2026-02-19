@@ -19,10 +19,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowBigLeft, ArrowBigRight, ArrowDownWideNarrow, ArrowDownZA, ArrowUpDown, DollarSign, X } from "lucide-react"
+import { ArrowBigLeft, ArrowBigRight, ArrowDownWideNarrow, ArrowDownZA, ArrowUpDown, DollarSign, PlusCircleIcon, PlusSquare, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { deriveSeedFromMnemonic } from "@/lib/crypto/deriveSeedFromMnemonic"
 import { deriveSolanaKeyPair } from "@/lib/crypto/solana/deriveKeypair"
+import { useCoingecko } from "@/hooks/useCoingecko"
+import { useGetSolBalance } from "@/hooks/useGetSolBalance"
 
 
 
@@ -31,17 +33,15 @@ export default function Home() {
   const accounts = useWalletStore(s => s.accounts)
   const addAccount = useWalletStore(s => s.addAccount)
   const removeAccount = useWalletStore(s => s.removeAccount)
+  const isUnlocked = useWalletStore(s => s.isUnlocked);
+  const {balances} = useGetSolBalance();
 
-  console.log(accounts)
-  const [balances,setBalances] = useState<Map<string,number>>(new Map())
-  const [realtimeData, setRealtimeData] = useState()
-  const [showModal,setShowModal] = useState<boolean>(false);
   const [clicked,setClicked] = useState<string>("no");
   const [password,setPassword] = useState<string>("")
   const [index,setIndex] = useState<number>(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-
+  const {realtimeData,loading,error} = useCoingecko();
   async function handleRemove(address: string){
     removeAccount(address);
   }
@@ -62,51 +62,12 @@ export default function Home() {
     setClicked("no")
   }
 
-  useEffect(() => {
-    async function getData() {
-      try {
-        const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd", {
-                                      method: "GET",
-                                      headers: {
-                                        "Authorization": "Bearer CG-uaLzWCXVbePBmpvAiKFxUBJD",
-                                        "Content-Type": "application/json"
-                                      }
-                                    })
-;
-
-        const data = await response.json();
-        setRealtimeData(data);
-
-        console.log("FETCHED DATA: ",data);
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    }
-
-    getData();
-
-  },[])
 
   useEffect(() => {
-    async function fetchBalances() {
-      const newBalances = new Map<string, number>()
-      for (const account of accounts) {
-        const bal = await getSolBalance(account.address)
-        newBalances.set(account.address, bal)
-      }
-      setBalances(newBalances)
-    }
-    if (accounts.length > 0) {
-      fetchBalances()
-    }
-  }, [accounts])
-
-
-  useEffect(() => {
-    if (accounts.length === 0) {
+    if (!isUnlocked) {
       router.push("/login")
     }
-  }, [accounts])
+  }, [isUnlocked,router])
 
 
 
@@ -230,8 +191,8 @@ export default function Home() {
               {clicked === "no" && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Add New Wallet
+                    <Button variant="outline" className="text-white bg-accent-foreground w-24 h-24">
+                      <PlusCircleIcon />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -251,10 +212,11 @@ export default function Home() {
               )}
 
               {clicked === "New" && (
-                <div className="flex flex-col gap-4 w-full">
+                <div className="flex flex-col h-full w-full items-start justify-between">
                   <Button
                     variant="secondary"
                     onClick={() => setClicked("no")}
+                    className="max-w-xs"
                   >
                     <ArrowBigLeft />
                   </Button>
@@ -278,10 +240,11 @@ export default function Home() {
               )}
 
               {clicked === "Import" && (
-                <div className="flex flex-col gap-4 w-full">
+                <div className="flex flex-col items-start justify-start h-full gap-4 w-full">
                   <Button
                     variant="secondary"
                     onClick={() => setClicked("no")}
+                    className="max-w-xs"
                   >
                     <ArrowBigLeft />
                   </Button>
