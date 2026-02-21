@@ -249,14 +249,7 @@ export default function Home() {
                   </AlertDialog>
 
 
-                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
-                    <ArrowUpDown size={18} />
-                    Swap
-                  </Button>
-                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
-                    <DollarSign size={18} />
-                    Buy
-                  </Button>
+                  
                 </div>
 
                 {/* Address + Balance */}
