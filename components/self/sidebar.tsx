@@ -1,5 +1,13 @@
 import React from 'react'
 import Logo from './logo'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 
 type Coin = {
@@ -23,25 +31,54 @@ const sidebar = (props: Props) => {
         <h2 className='text-muted-foreground text-xl'>Portkey</h2>
       </div>
 
-      <div className='overflow-y-scroll flex flex-col w-full h-2/3 no-scrollbar border border-white rounded-md gap-2 p-1'>
-        {props.data.map((each,i) => (
-          <div key={i} className='w-full flex flex-row items-center justify-between gap-2 p-2'>
-            <img src={each.image} alt="" className='w-10' />
-            <p className='text-white w-1/3 flex-wrap'>{each.name}</p>
-            <p className='text-white font-semibold'>${each.current_price.toFixed(1)}</p>
-            <p
-              className={
-                (each.price_change_percentage_24h ?? 0) > 0
-                  ? "text-green-500"
-                  : "text-red-500"
-              }
-            >
-              {(each.price_change_percentage_24h ?? 0).toFixed(1)}%
-            </p>
+      <div className="w-full h-2/3 overflow-y-auto no-scrollbar overflow-x-hidden border border-border rounded-lg">
+        <Table className="table-fixed w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10"></TableHead>
+              <TableHead className="truncate">Name</TableHead>
+              <TableHead className="text-right w-20">Price</TableHead>
+              <TableHead className="text-right w-20">24h</TableHead>
+            </TableRow>
+          </TableHeader>
 
-          </div>
-        ))}
+          <TableBody>
+            {props.data.map((each, i) => (
+              <TableRow
+                key={i}
+                className="hover:bg-muted/40 transition-colors"
+              >
+                <TableCell className="w-12">
+                  <img
+                    src={each.image}
+                    alt={each.name}
+                    className="w-8 h-8 rounded-full object-contain"
+                  />
+                </TableCell>
+
+                <TableCell className="font-medium text-muted-foreground truncate">
+                  {each.name}
+                </TableCell>
+
+                <TableCell className="text-right text-muted-foreground">
+                  ${each.current_price.toFixed(2)}
+                </TableCell>
+
+                <TableCell
+                  className={`text-right font-medium ${
+                    (each.price_change_percentage_24h ?? 0) > 0
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {(each.price_change_percentage_24h ?? 0).toFixed(2)}%
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
+
 
       <div className=''>
 
