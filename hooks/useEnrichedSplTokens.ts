@@ -26,9 +26,10 @@ export function useEnrichedSplTokens() {
 
         // 1️⃣ Fetch balances
         const balances = await getSplTokenBalances(accounts[0].address)
+        console.log("balances: ",balances)
 
         // 2️⃣ Fetch token list
-        const res = await fetch("https://token.jup.ag/all")
+        const res = await fetch("https://cache.jup.ag/tokens")
         const tokenList = await res.json()
 
         // 3️⃣ Build fast lookup map

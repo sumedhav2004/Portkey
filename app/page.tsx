@@ -28,6 +28,7 @@ import { useGetSolBalance } from "@/hooks/useGetSolBalance"
 import { useEnrichedSplTokens } from "@/hooks/useEnrichedSplTokens"
 import { getSplTokenBalances } from "@/lib/crypto/solana/getSplTokenBalances"
 import { useTokenList } from "@/hooks/useSplTokenList"
+import QRCode from "react-qr-code"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,7 @@ export default function Home() {
   const isUnlocked = useWalletStore(s => s.isUnlocked);
   const {balances,refresh} = useGetSolBalance();
   const { tokens } = useEnrichedSplTokens()
+  console.log("Special Tokens: ",tokens)
   const {send} = useSendSol()
 
 
@@ -207,10 +209,46 @@ export default function Home() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
+                  {/* <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
                     <ArrowDownWideNarrow size={18} />
                     Receive
-                  </Button>
+                  </Button> */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary"
+                      >
+                        <ArrowDownWideNarrow size={18} />
+                        Receive
+                      </Button>
+                    </AlertDialogTrigger>
+
+                    <AlertDialogContent className="w-full flex flex-col items-center">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white text-4xl">
+                          Your Wallet Address
+                        </AlertDialogTitle>
+                      </AlertDialogHeader>
+
+                      <div className="flex justify-center bg-white p-4 rounded-lg">
+                        <QRCode
+                          value={account.address}
+                          size={180}
+                        />
+                      </div>
+
+                      <p className="break-all text-sm text-white mt-4 text-center">
+                        {account.address}
+                      </p>
+
+                      <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => navigator.clipboard.writeText(account.address)}>Copy Address</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+
                   <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
                     <ArrowUpDown size={18} />
                     Swap

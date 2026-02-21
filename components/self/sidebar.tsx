@@ -16,7 +16,6 @@ type Props = {
 }
 
 const sidebar = (props: Props) => {
-  console.log("FROM SIDEBAR: ",props.data)
   return (
     <div className='max-w-xs border w-full h-screen fixed border-sidebar-border flex flex-col justify-between items-center p-4 bg-sidebar-accent'>
       <div className='flex flex-col max-h-[20%] items-start'>
