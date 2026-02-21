@@ -25,7 +25,22 @@ import { deriveSeedFromMnemonic } from "@/lib/crypto/deriveSeedFromMnemonic"
 import { deriveSolanaKeyPair } from "@/lib/crypto/solana/deriveKeypair"
 import { useCoingecko } from "@/hooks/useCoingecko"
 import { useGetSolBalance } from "@/hooks/useGetSolBalance"
-
+import { useEnrichedSplTokens } from "@/hooks/useEnrichedSplTokens"
+import { getSplTokenBalances } from "@/lib/crypto/solana/getSplTokenBalances"
+import { useTokenList } from "@/hooks/useSplTokenList"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useSendSol } from "@/hooks/useSendSol"
+import { Keypair } from "@solana/web3.js"
 
 
 export default function Home() {
@@ -34,12 +49,26 @@ export default function Home() {
   const addAccount = useWalletStore(s => s.addAccount)
   const removeAccount = useWalletStore(s => s.removeAccount)
   const isUnlocked = useWalletStore(s => s.isUnlocked);
-  const {balances} = useGetSolBalance();
+  const {balances,refresh} = useGetSolBalance();
+  const { tokens } = useEnrichedSplTokens()
+  const {send} = useSendSol()
+
+
+  const handleSendTransaction = async(keypair: Keypair, address: string, amount: number) => {
+    const signature = await send(keypair,address,amount)
+    alert("Transaction underway")
+    await new Promise(res => setTimeout(res, 700))
+    await refresh()
+    alert("Transaction successfull")
+  }
+
 
   const [clicked,setClicked] = useState<string>("no");
   const [password,setPassword] = useState<string>("")
   const [index,setIndex] = useState<number>(0)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
+  const [destinationAddress,setDestinationAddress] = useState<string>("")
+  const [amount,setAmount] = useState<number>(0)
 
   const {realtimeData,loading,error} = useCoingecko();
   async function handleRemove(address: string){
@@ -152,10 +181,32 @@ export default function Home() {
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-4 gap-2">
-                  <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
+                  {/* <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary" onClick={()=>setClicked("send")}>
                     <ArrowBigRight size={18} />
                     Send
-                  </Button>
+                  </Button> */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary" onClick={()=>setClicked("send")}>
+                        <ArrowBigRight size={18} />
+                        Send
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white">Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone..
+                        </AlertDialogDescription>
+                        <Input onChange={(e) => setDestinationAddress(e.target.value)} placeholder="Enter the destination address" className="text-white" />
+                        <Input onChange={(e) => setAmount(Number(e.target.value))} placeholder="Enter the amount" type="number" className="text-white" />
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleSendTransaction(account.keypair,destinationAddress,amount)}>Send</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   <Button variant="secondary" className="flex flex-col text-xs sm:text-sm h-auto hover:text-primary">
                     <ArrowDownWideNarrow size={18} />
                     Receive
@@ -254,6 +305,7 @@ export default function Home() {
                   </p>
                 </div>
               )}
+
             </div>
           )}
 
